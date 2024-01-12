@@ -9,8 +9,8 @@ INTROSPECTION_COMPILER_ARGS = \
    --includedir=$(srcdir) \
    --includedir=.
 
-SUBDIRS = $(gdktarget) . tests
-DIST_SUBDIRS = win32 x11 quartz directfb tests
+SUBDIRS = $(gdktarget) . 
+DIST_SUBDIRS = x11 quartz directfb tests
 
 CLEANFILES =
 
@@ -392,7 +392,7 @@ MSVC_INTROSPECT_GIRS = Gdk-2.0.gir
 
 BASE_MSVC_GIR_CFLAGS =			\
 	-DGDK_COMPILATION		\
-	-I../.. -I../../gdk -I.../../gdk/win32
+	-I../.. -I../../gdk
 
 INTROSPECTION_INTERMEDIATE_ITEMS = \
 	$(top_builddir)/build/win32/Gdk-2.0.gir.msvc.introspect	\

@@ -34,7 +34,6 @@ m4_define([gtk_binary_version], [2.10.0])
 # required versions of other packages
 m4_define([glib_required_version], [2.28.0])
 m4_define([pango_required_version], [1.20])
-m4_define([atk_required_version], [1.29.2])
 m4_define([cairo_required_version], [1.6])
 m4_define([gdk_pixbuf_required_version], [2.21.0])
 
@@ -100,14 +99,6 @@ LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 LT_CURRENT_MINUS_AGE=m4_eval(lt_current - lt_age)
 AC_SUBST(LT_VERSION_INFO)
 AC_SUBST(LT_CURRENT_MINUS_AGE)
-
-m4_define([gail_lt_current],[18])
-m4_define([gail_lt_revision],[1])
-m4_define([gail_lt_age],[0])
-m4_define([gail_lt_version_info],[gail_lt_current:gail_lt_revision:gail_lt_age])
-m4_define([gail_lt_current_minus_age],[m4_eval(gail_lt_current - gail_lt_age)])
-AC_SUBST([GAIL_LT_VERSION_INFO],[gail_lt_version_info])
-AC_SUBST([GAIL_LT_CURRENT_MINUS_AGE],[gail_lt_current_minus_age])
 
 GETTEXT_PACKAGE=gtk20
 AC_SUBST(GETTEXT_PACKAGE)
@@ -190,7 +181,7 @@ m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
 AC_SYS_LARGEFILE
 
 AM_PROG_AS
-AC_PATH_TOOL(NM, nm, nm)
+AC_CHECK_TOOL(NM, nm, nm)
 
 dnl Initialize maintainer mode
 AM_MAINTAINER_MODE([enable])
@@ -324,7 +315,7 @@ if test "x$GCC" = "xyes"; then
 fi
 changequote([,])dnl
 
-CPPFLAGS="$CPPFLAGS -DG_DISABLE_SINGLE_INCLUDES -DATK_DISABLE_SINGLE_INCLUDES -DGDK_PIXBUF_DISABLE_SINGLE_INCLUDES -DGTK_DISABLE_SINGLE_INCLUDES"
+CPPFLAGS="$CPPFLAGS -DG_DISABLE_SINGLE_INCLUDES -DGDK_PIXBUF_DISABLE_SINGLE_INCLUDES -DGTK_DISABLE_SINGLE_INCLUDES"
 
 # Ensure MSVC-compatible struct packing convention is used when
 # compiling for Win32 with gcc.
@@ -372,7 +363,6 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 ## annoying to construct
 PKG_CHECK_MODULES(BASE_DEPENDENCIES,
   [glib-2.0 >= glib_required_version dnl
-   atk >= atk_required_version dnl
    pango >= pango_required_version dnl
    cairo >= cairo_required_version dnl
    gdk-pixbuf-2.0 >= gdk_pixbuf_required_version])
@@ -510,33 +500,8 @@ if test "$gtk_ok" = "yes"; then
             [Define to 1 if sigsetjmp is available])
 fi
 
-# i18n stuff
-ALL_LINGUAS="`grep -v '^#' "$srcdir/po/LINGUAS" | tr '\n' ' '`"
 AM_GLIB_GNU_GETTEXT
 LIBS="$LIBS $INTLLIBS"
-AC_OUTPUT_COMMANDS([case "$CONFIG_FILES" in *po-properties/Makefile.in*)
-        sed -e "/POTFILES =/r po-properties/POTFILES" po-properties/Makefile.in > po-properties/Makefile
-      esac])
-
-dnl Snippet below is copied from AM_GLIB_GNU_GETTEXT to generate a first
-dnl po-properties/POTFILES during configure; see GNOME #573515.
-dnl
-dnl Generate list of files to be processed by xgettext which will
-dnl be included in po-properties/Makefile.
-test -d po-properties || mkdir po-properties
-if test "x$srcdir" != "x."; then
-  if test "x`echo $srcdir | sed 's@/.*@@'`" = "x"; then
-    popropsrcprefix="$srcdir/"
-  else
-    popropsrcprefix="../$srcdir/"
-  fi
-else
-  popropsrcprefix="../"
-fi
-rm -f po-properties/POTFILES
-sed -e "/^#/d" -e "/^\$/d" -e "s,.*,	$popropsrcprefix& \\\\," -e "\$s/\(.*\) \\\\/\1/" \
-< $srcdir/po-properties/POTFILES.in > po-properties/POTFILES
-dnl (End of adapted AM_GLIB_GNU_GETTEXT snippet.)
 
 AM_GLIB_DEFINE_LOCALEDIR(GTK_LOCALEDIR)
 
@@ -913,11 +878,9 @@ dnl Look for a host system's gdk-pixbuf-csource if we are cross-compiling
 
 AM_CONDITIONAL(CROSS_COMPILING, test $cross_compiling = yes)
 
-if test $cross_compiling = yes; then
-  AC_PATH_PROG(GTK_UPDATE_ICON_CACHE, gtk-update-icon-cache, no)
-  if test x$GTK_UPDATE_ICON_CACHE = xno; then
-    REBUILD_PNGS=#
-  fi
+AC_PATH_PROG(GTK_UPDATE_ICON_CACHE, gtk-update-icon-cache, no)
+if test x$GTK_UPDATE_ICON_CACHE = xno; then
+  REBUILD_PNGS=#
 fi
 
 AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource, no)
@@ -1349,34 +1312,10 @@ AC_SUBST(GDK_DEP_CFLAGS)
 
 ########################################
 # Check for Accessibility Toolkit flags
+# Apparently does more that that. Removing this section breaks included dirs for various headers, like cairo.h
 ########################################
 
-ATK_PACKAGES=atk
-AC_MSG_CHECKING(ATK flags)
-if $PKG_CONFIG --exists $ATK_PACKAGES ; then
-        ATK_CFLAGS=`$PKG_CONFIG --cflags $ATK_PACKAGES`
-        ATK_LIBS=`$PKG_CONFIG --libs $ATK_PACKAGES`
-
-        AC_MSG_RESULT($ATK_CFLAGS $ATK_LIBS)
-else
-        AC_MSG_ERROR([
-*** Accessibility Toolkit not found. Accessibility Toolkit is required
-*** to build GTK+.
-])
-fi
-
-if $PKG_CONFIG --uninstalled $ATK_PACKAGES; then
-        :
-else
-	gtk_save_LIBS="$LIBS"
-        LIBS="$ATK_LIBS $LIBS"
-        AC_TRY_LINK_FUNC(atk_object_get_type, : , AC_MSG_ERROR([
-                *** Cannot link to Accessibility Toolkit. Accessibility Toolkit is required
-                *** to build GTK+]))
-        LIBS="$gtk_save_LIBS"
-fi
-
-GTK_PACKAGES="atk cairo gdk-pixbuf-2.0 gio-2.0"
+GTK_PACKAGES="cairo gdk-pixbuf-2.0 gio-2.0"
 if test "x$gdktarget" = "xx11"; then
   GTK_PACKAGES="$GTK_PACKAGES pangoft2"
 fi
@@ -1390,7 +1329,6 @@ if test x"$os_win32" = xyes; then
 fi
 
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
-ATK_PREFIX="`$PKG_CONFIG --variable=prefix atk`"
 PANGO_PREFIX="`$PKG_CONFIG --variable=prefix pango`"
 CAIRO_PREFIX="`pkg-config --variable=prefix cairo`"
 
@@ -1401,7 +1339,6 @@ AC_SUBST(GTK_DEP_LIBS)
 AC_SUBST(GTK_DEP_CFLAGS)
 
 AC_SUBST(GLIB_PREFIX)
-AC_SUBST(ATK_PREFIX)
 AC_SUBST(PANGO_PREFIX)
 AC_SUBST(CAIRO_PREFIX)
 
@@ -1411,36 +1348,6 @@ AC_SUBST(GTK_XIM_FLAGS)
 GDK_PIXBUF_LIBS=`$PKG_CONFIG --libs gdk-pixbuf-2.0`
 AC_SUBST(GDK_PIXBUF_LIBS)
 
-########################
-# Checks needed for gail
-########################
-
-old_LIBS="$LIBS"
-dnl Checks for inet libraries:
-AC_SEARCH_LIBS(gethostent, nsl)
-AC_SEARCH_LIBS(setsockopt, socket)
-AC_SEARCH_LIBS(connect, inet)
-
-dnl check for the sockaddr_un.sun_len member
-AC_CHECK_MEMBER([struct sockaddr_un.sun_len],
-		[struct_sockaddr_un_sun_len=true],
-		[struct_sockaddr_un_suin_len=false],
-		[#include <sys/types.h>
-		 #include <sys/un.h>]
-		)
-case $struct_sockaddr_un_sun_len in 
-	true)
-		AC_DEFINE_UNQUOTED(HAVE_SOCKADDR_UN_SUN_LEN, 1,
-		                   [Have the sockaddr_un.sun_len member])
-		;;
-	*)
-		;;
-esac
-
-GAIL_INET_LIBS="$LIBS"
-AC_SUBST([GAIL_INET_LIBS])
-
-LIBS="$old_LIBS"
 
 ################################################################
 # Printing system checks
@@ -1723,43 +1630,13 @@ Makefile
 gdk-2.0.pc
 gtk+-2.0.pc
 gtk+-unix-print-2.0.pc
-gail.pc
 gdk-2.0-uninstalled.pc
 gtk+-2.0-uninstalled.pc
-gail-uninstalled.pc
 m4macros/Makefile
-po/Makefile.in
-po-properties/Makefile.in
-demos/Makefile
-demos/gtk-demo/Makefile
-demos/gtk-demo/geninclude.pl
 tests/Makefile
-docs/Makefile
-docs/reference/Makefile
-docs/reference/gdk/Makefile
-docs/reference/gdk/version.xml
-docs/reference/gtk/Makefile
-docs/reference/gtk/version.xml
-docs/reference/libgail-util/Makefile
-docs/faq/Makefile
-docs/tools/Makefile
-docs/tutorial/Makefile
 build/Makefile
-build/win32/Makefile
-build/win32/vs9/Makefile
-build/win32/vs9/gtk-version-paths.vsprops
-build/win32/vs10/Makefile
-build/win32/vs10/gtk-version-paths.props
-build/win32/vs11/Makefile
-build/win32/vs12/Makefile
-build/win32/vs14/Makefile
-build/win32/vs15/Makefile
-build/win32/vs16/Makefile
 gdk/Makefile
 gdk/x11/Makefile
-gdk/win32/Makefile
-gdk/win32/rc/Makefile
-gdk/win32/rc/gdk.rc
 gdk/quartz/Makefile
 gdk/directfb/Makefile
 gdk/tests/Makefile
@@ -1770,10 +1647,6 @@ gtk/gtk-win32.rc
 gtk/theme-bits/Makefile
 gtk/tests/Makefile
 modules/Makefile
-modules/other/Makefile
-modules/other/gail/Makefile
-modules/other/gail/libgail-util/Makefile
-modules/other/gail/tests/Makefile
 modules/engines/Makefile
 modules/engines/pixbuf/Makefile
 modules/engines/ms-windows/Makefile

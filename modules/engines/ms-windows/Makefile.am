@@ -8,7 +8,7 @@ INCLUDES = \
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/gdk		\
 	-I$(top_builddir)/gdk		\
-	-DGDK_DISABLE_DEPRECATED	\
+	$(/bin/true)	\
 	$(GTK_DEP_CFLAGS)	\
 	$(GMODULE_CFLAGS)
 

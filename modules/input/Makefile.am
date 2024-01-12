@@ -9,8 +9,8 @@ INCLUDES = \
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/gdk		\
 	-I$(top_builddir)/gdk		\
-	-DGDK_DISABLE_DEPRECATED	\
-	-DGTK_DISABLE_DEPRECATED 	\
+	$(/bin/true)	\
+	$(/bin/true) 	\
 	$(GTK_DEBUG_FLAGS)		\
 	$(GTK_XIM_FLAGS)		\
 	$(GTK_DEP_CFLAGS)		\

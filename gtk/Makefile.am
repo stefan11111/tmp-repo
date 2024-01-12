@@ -16,7 +16,7 @@ else
 GTK_PRINT_PREVIEW_COMMAND="evince --unlink-tempfile --preview --print-settings %s %f"
 endif
 
-SUBDIRS = theme-bits . tests
+SUBDIRS = theme-bits . 
 DIST_SUBDIRS=theme-bits tests
 
 if HAVE_PAPI_CUPS
@@ -37,7 +37,7 @@ GTK_BASE_CFLAGS_DEFINES =				\
 	-DGTK_VERSION=\"$(GTK_VERSION)\"		\
 	-DGTK_BINARY_VERSION=\"$(GTK_BINARY_VERSION)\"	\
 	-DGTK_COMPILATION				\
-	-DGTK_DISABLE_DEPRECATED			\
+	$(/bin/true)			\
 	-DGTK_FILE_SYSTEM_ENABLE_UNSUPPORTED		\
 	-DGTK_PRINT_BACKEND_ENABLE_UNSUPPORTED
 
@@ -1004,7 +1004,7 @@ Gtk_2_0_gir_MSVC_FILES =		\
 	gtktypebuiltins.c
 
 Gtk_2_0_gir_MSVC_EXPORT_PACKAGES = $(Gtk_2_0_gir_EXPORT_PACKAGES)
-Gtk_2_0_gir_MSVC_INCLUDE_GIRS = Atk-1.0
+Gtk_2_0_gir_MSVC_INCLUDE_GIRS =
 Gtk_2_0_gir_MSVC_LIBS = gtk-win32-2.0 gdk-win32-2.0
 Gtk_2_0_gir_MSVC_CFLAGS = $(GTK_MSVC_GIR_CFLAGS)
 Gtk_2_0_gir_MSVC_SCANNERFLAGS =	\
@@ -1065,7 +1065,7 @@ Gtk_2_0_gir_SCANNERFLAGS = --include-uninstalled=$(top_builddir)/gdk/Gdk-2.0.gir
 if USE_X11
 Gtk_2_0_gir_SCANNERFLAGS += --add-include-path=$(top_builddir)/gdk/x11
 endif
-Gtk_2_0_gir_INCLUDES = Atk-1.0
+Gtk_2_0_gir_INCLUDES =
 Gtk_2_0_gir_CFLAGS = \
 		$(INCLUDES) \
 		-UGDK_DISABLE_DEPRECATED \
@@ -1089,10 +1089,9 @@ endif
 # Installed tools
 #
 bin_PROGRAMS = \
-	gtk-query-immodules-2.0 \
-	gtk-update-icon-cache
+	gtk-query-immodules-2.0
 
-bin_SCRIPTS = gtk-builder-convert
+bin_SCRIPTS =
 
 if OS_WIN32
 
@@ -1440,16 +1439,8 @@ stamp-icons: $(STOCK_ICONS)
 	) done 								\
 	&& touch stamp-icons
 
-if CROSS_COMPILING
-gtk_update_icon_cache_program = $(GTK_UPDATE_ICON_CACHE)
-else
-gtk_update_icon_cache_program =							\
-	   ./gtk-update-icon-cache
-endif
-
 gtkbuiltincache.h: @REBUILD@ stamp-icons
-	$(MAKE) $(AM_MAKEFLAGS) gtk-update-icon-cache$(EXEEXT)
-	$(gtk_update_icon_cache_program) --force --ignore-theme-index		\
+	$(GTK_UPDATE_ICON_CACHE) --force --ignore-theme-index		\
 	   --include-image-data							\
 	   --source builtin_icons stock-icons > gtkbuiltincache.h.tmp &&        \
 	mv gtkbuiltincache.h.tmp gtkbuiltincache.h
@@ -1463,7 +1454,6 @@ EXTRA_DIST +=                   \
 	tree_minus.xbm          \
 	tree_minus.xpm		\
 	tree_plus.xpm		\
-	gtk-builder-convert	\
 	gtk-win32.rc		\
 	gtk-win32.rc.in		\
 	gtkwin32embed.h		\
